@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance AI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+        :root {
+            --accent: #00c4a7;
+            --accent-dark: #00a88f;
+            --accent-light: rgba(0, 196, 167, 0.10);
+            --bg: #f0f4f8;
+            --card: #ffffff;
+            --border: rgba(0,0,0,0.08);
+            --text: #111827;
+            --muted: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 24px;
+        }
+
+        /* ── App Shell ── */
+        .app {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 272px 1fr;
+            grid-template-rows: auto 1fr;
+            background: var(--card);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px -10px rgba(0,0,0,0.15), 0 0 0 1px var(--border);
+            min-height: 580px;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            grid-row: 1 / 3;
+            background: linear-gradient(160deg, #0a2f2a 0%, #0d3b34 60%, #062620 100%);
+            padding: 36px 26px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(0,196,167,0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            bottom: -40px; left: -40px;
+            width: 160px; height: 160px;
+            background: radial-gradient(circle, rgba(0,196,167,0.10) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .brand { margin-bottom: 36px; }
+        .brand-icon {
+            width: 46px; height: 46px;
+            background: var(--accent);
+            border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 21px;
+            margin-bottom: 14px;
+        }
+        .brand-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 21px; font-weight: 700;
+            color: #fff; letter-spacing: -0.5px; line-height: 1.2;
+        }
+        .brand-tagline { font-size: 12.5px; color: rgba(255,255,255,0.45); margin-top: 4px; }
+
+        .sdiv { height: 1px; background: rgba(255,255,255,0.08); margin: 20px 0; }
+
+        .slabel {
+            font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+            color: rgba(255,255,255,0.35); margin-bottom: 12px; font-weight: 600;
+        }
+
+        .info-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 13px; padding: 14px; margin-bottom: 9px;
+        }
+        .info-card-label { font-size: 10.5px; color: rgba(255,255,255,0.4); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.7px; }
+        .info-card-value { font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 600; color: var(--accent); }
+        .info-card-sub { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+        /* ── Model Selector in Sidebar ── */
+        .model-selector { margin-top: 4px; }
+        .model-option {
+            display: flex; align-items: center; gap: 10px;
+            padding: 11px 14px;
+            border-radius: 11px;
+            border: 1.5px solid rgba(255,255,255,0.08);
+            margin-bottom: 7px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            position: relative;
+        }
+        .model-option:hover { background: rgba(255,255,255,0.07); border-color: rgba(0,196,167,0.3); }
+        .model-option.active {
+            background: rgba(0,196,167,0.12);
+            border-color: var(--accent);
+        }
+        .model-option input[type="radio"] { display: none; }
+        .model-radio {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.25);
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: border-color 0.15s;
+        }
+        .model-option.active .model-radio {
+            border-color: var(--accent);
+        }
+        .model-radio-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--accent);
+            opacity: 0; transform: scale(0);
+            transition: all 0.15s ease;
+        }
+        .model-option.active .model-radio-dot { opacity: 1; transform: scale(1); }
+        .model-info { flex: 1; min-width: 0; }
+        .model-info-name { font-size: 12.5px; font-weight: 500; color: #fff; }
+        .model-option.active .model-info-name { color: var(--accent); }
+        .model-info-badge {
+            font-size: 10px; color: rgba(255,255,255,0.35);
+            margin-top: 1px;
+        }
+        .model-option.active .model-info-badge { color: rgba(0,196,167,0.7); }
+        .best-tag {
+            font-size: 9.5px; font-weight: 600;
+            background: rgba(0,196,167,0.2);
+            color: var(--accent);
+            padding: 2px 7px; border-radius: 99px;
+            letter-spacing: 0.3px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            font-size: 11px; color: rgba(255,255,255,0.22);
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* ── Topbar ── */
+        .topbar {
+            padding: 28px 40px 0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .topbar-title { font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 600; color: var(--text); }
+        .topbar-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+        .btn-stats {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--accent-light);
+            color: var(--accent-dark);
+            border: 1.5px solid rgba(0,196,167,0.3);
+            padding: 10px 18px; border-radius: 12px;
+            font-size: 13.5px; font-weight: 600; cursor: pointer;
+            transition: all 0.18s ease; font-family: 'Inter', sans-serif;
+        }
+        .btn-stats:hover { background: rgba(0,196,167,0.18); border-color: var(--accent); transform: translateY(-1px); }
+
+        /* ── Main ── */
+        .main { padding: 22px 40px 34px; display: flex; flex-direction: column; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-top: 26px;
+        }
+
+        .field { display: flex; flex-direction: column; gap: 7px; }
+        .field-label {
+            display: flex; align-items: center; gap: 7px;
+            font-size: 12px; font-weight: 500; color: var(--text);
+        }
+        .field-icon {
+            width: 24px; height: 24px;
+            background: var(--accent-light);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; flex-shrink: 0;
+        }
+        .field input {
+            width: 100%; padding: 12px 14px;
+            font-size: 15px; font-weight: 500; color: var(--text);
+            background: #f8fafc; border: 1.5px solid #e2e8f0;
+            border-radius: 11px; transition: all 0.18s ease;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .field input:focus {
+            outline: none; border-color: var(--accent); background: #fff;
+            box-shadow: 0 0 0 4px rgba(0,196,167,0.12);
+        }
+        .field-hint { font-size: 10.5px; color: var(--muted); line-height: 1.4; }
+
+        /* ── Action Row ── */
+        .action-row { margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+        .btn-predict {
+            display: flex; align-items: center; gap: 9px;
+            background: var(--accent); color: #fff; border: none;
+            padding: 14px 28px; border-radius: 13px;
+            font-size: 14.5px; font-weight: 600; cursor: pointer;
+            transition: all 0.22s ease; font-family: 'Inter', sans-serif;
+            box-shadow: 0 8px 20px -4px rgba(0,196,167,0.35);
+        }
+        .btn-predict:hover { background: var(--accent-dark); transform: translateY(-2px); box-shadow: 0 14px 24px -4px rgba(0,196,167,0.4); }
+        .btn-predict:active { transform: scale(0.98); }
+
+        .btn-reset {
+            background: transparent; border: 1.5px solid #e2e8f0; color: var(--muted);
+            padding: 13px 18px; border-radius: 13px; font-size: 13.5px; font-weight: 500;
+            cursor: pointer; transition: all 0.18s ease; font-family: 'Inter', sans-serif;
+        }
+        .btn-reset:hover { border-color: #cbd5e1; color: var(--text); background: #f8fafc; }
+
+        /* ── Result ── */
+        #result {
+            display: none; align-items: center; gap: 14px;
+            padding: 12px 20px;
+            background: #f0fdf4; border: 1.5px solid #86efac;
+            border-radius: 13px;
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #result.show { display: flex; }
+        #result.error { background: #fef2f2; border-color: #fca5a5; }
+        .result-score {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 26px; font-weight: 700; color: #15803d; line-height: 1;
+        }
+        #result.error .result-score { color: #b91c1c; }
+        .result-meta { display: flex; flex-direction: column; gap: 2px; }
+        .result-label { font-size: 11px; color: #166534; font-weight: 500; }
+        .result-model { font-size: 11px; color: #4ade80; }
+        #result.error .result-label { color: #991b1b; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); z-index: 100;
+            align-items: center; justify-content: center;
+            padding: 24px; backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--card); border-radius: 20px;
+            width: 100%; max-width: 660px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.25); overflow: hidden;
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 22px 26px; border-bottom: 1px solid var(--border);
+        }
+        .modal-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 600; color: var(--text); }
+        .modal-close {
+            width: 30px; height: 30px; border-radius: 8px;
+            border: 1px solid var(--border); background: transparent;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 15px; color: var(--muted); transition: all 0.15s;
+        }
+        .modal-close:hover { background: #f1f5f9; color: var(--text); }
+        .modal-body { padding: 22px 26px; }
+
+        /* Model tabs inside modal */
+        .modal-tabs {
+            display: flex; gap: 6px; margin-bottom: 20px;
+            background: #f1f5f9; border-radius: 11px; padding: 4px;
+        }
+        .modal-tab {
+            flex: 1; padding: 9px; border-radius: 8px; border: none;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            background: transparent; color: var(--muted);
+            transition: all 0.15s; font-family: 'Inter', sans-serif;
+        }
+        .modal-tab.active { background: #fff; color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+
+        .model-stats { display: none; }
+        .model-stats.visible { display: block; }
+
+        .stats-row {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 12px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #f8fafc; border: 1px solid var(--border);
+            border-radius: 13px; padding: 16px; text-align: center;
+        }
+        .stat-val {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px; font-weight: 700; color: var(--accent-dark);
+        }
+        .stat-lbl { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+
+        .feat-label { font-size: 13px; font-weight: 600; color: var(--text); display: block; margin-bottom: 11px; }
+        .feat-row { display: flex; align-items: center; gap: 11px; margin-bottom: 9px; }
+        .feat-name { font-size: 12px; color: var(--muted); width: 196px; flex-shrink: 0; }
+        .feat-track { flex: 1; background: #e2e8f0; border-radius: 99px; height: 7px; overflow: hidden; }
+        .feat-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.5s ease; }
+        .feat-pct { font-size: 11.5px; font-weight: 600; color: var(--accent-dark); width: 34px; text-align: right; }
+
+        .modal-note {
+            margin-top: 18px; padding: 11px 14px;
+            background: rgba(0,196,167,0.07);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 9px 9px 0;
+            font-size: 12px; color: var(--muted); line-height: 1.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 920px) {
+            .app { grid-template-columns: 1fr; }
+            .sidebar { grid-row: auto; padding: 24px; flex-direction: row; flex-wrap: wrap; gap: 16px; }
+            .brand { margin-bottom: 0; }
+            .sdiv { display: none; }
+            .form-grid { grid-template-columns: repeat(2, 1fr); }
+            .topbar, .main { padding-left: 24px; padding-right: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">📚</div>
+            <div class="brand-name">Performance<br>AI</div>
+            <div class="brand-tagline">Predict your academic score</div>
+        </div>
+
+        <div class="sdiv"></div>
+        <div class="slabel">Choose Model</div>
+
+        <div class="model-selector">
+
+            <label class="model-option active" id="opt-xgb" onclick="selectModel('xgb')">
+                <input type="radio" name="model" value="xgb" checked>
+                <div class="model-radio"><div class="model-radio-dot"></div></div>
+                <div class="model-info">
+                    <div class="model-info-name">XGBoost</div>
+                    <div class="model-info-badge">R² 0.9910 · MAE 1.65</div>
+                </div>
+                <span class="best-tag">Best</span>
+            </label>
+
+            <label class="model-option" id="opt-rf" onclick="selectModel('rf')">
+                <input type="radio" name="model" value="rf">
+                <div class="model-radio"><div class="model-radio-dot"></div></div>
+                <div class="model-info">
+                    <div class="model-info-name">Random Forest</div>
+                    <div class="model-info-badge">R² 0.9901 · MAE 1.77</div>
+                </div>
+            </label>
+
+            <label class="model-option" id="opt-lr" onclick="selectModel('lr')">
+                <input type="radio" name="model" value="lr">
+                <div class="model-radio"><div class="model-radio-dot"></div></div>
+                <div class="model-info">
+                    <div class="model-info-name">Linear Regression</div>
+                    <div class="model-info-badge">R² 0.9889 · MAE 1.98</div>
+                </div>
+            </label>
+
+        </div>
+
+        <div class="sdiv"></div>
+        <div class="slabel">Dataset Info</div>
+
+        <div class="info-card">
+            <div class="info-card-label">Training Samples</div>
+            <div class="info-card-value">10,000</div>
+        </div>
+        <div class="info-card">
+            <div class="info-card-label">Output Range</div>
+            <div class="info-card-value">10 – 100</div>
+            <div class="info-card-sub">Performance Index</div>
+        </div>
+
+        <div class="sidebar-footer">
+            Built as a mini-project · Pune, 2026
+        </div>
+    </aside>
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <div>
+            <div class="topbar-title">Student Performance Predictor</div>
+            <div class="topbar-sub">Fill in your habits · select a model · get your predicted index</div>
+        </div>
+        <button class="btn-stats" onclick="openStats()">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            Model Stats
+        </button>
+    </div>
+
+    <!-- Main -->
+    <main class="main">
+        <div class="form-grid">
+            <div class="field">
+                <div class="field-label"><span class="field-icon">⏳</span>Daily Study Hours</div>
+                <input type="number" id="hs" value="7" step="0.1" min="0" max="24">
+                <div class="field-hint">Focused hours per day</div>
+            </div>
+            <div class="field">
+                <div class="field-label"><span class="field-icon">🎯</span>Last Test Score</div>
+                <input type="number" id="ps" value="85" step="1" min="0" max="100">
+                <div class="field-hint">Previous score out of 100</div>
+            </div>
+            <div class="field">
+                <div class="field-label"><span class="field-icon">⚡</span>Extra Activities</div>
+                <input type="number" id="ea" value="1" step="1" min="0" max="1">
+                <div class="field-hint">1 = Yes · 0 = No</div>
+            </div>
+            <div class="field">
+                <div class="field-label"><span class="field-icon">🛌</span>Sleep per Night</div>
+                <input type="number" id="sh" value="8" step="0.5" min="0" max="24">
+                <div class="field-hint">Average hours of sleep</div>
+            </div>
+            <div class="field">
+                <div class="field-label"><span class="field-icon">✍️</span>Practice Papers</div>
+                <input type="number" id="sp" value="5" step="1" min="0" max="100">
+                <div class="field-hint">Sample papers solved</div>
+            </div>
+        </div>
+
+        <div class="action-row">
+            <button class="btn-predict" onclick="predict()">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Calculate My Score
+            </button>
+            <button class="btn-reset" onclick="resetForm()">Reset</button>
+            <div id="result">
+                <div class="result-score" id="score-val">—</div>
+                <div class="result-meta">
+                    <div class="result-label" id="score-lbl">Predicted Performance Index</div>
+                    <div class="result-model" id="score-model"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Stats Modal -->
+<div class="modal-overlay" id="statsModal" onclick="closeOnOverlay(event)">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">Model Accuracy & Statistics</span>
+            <button class="modal-close" onclick="closeStats()">✕</button>
+        </div>
+        <div class="modal-body">
+
+            <!-- Tabs -->
+            <div class="modal-tabs">
+                <button class="modal-tab active" onclick="switchTab('xgb', this)">XGBoost</button>
+                <button class="modal-tab" onclick="switchTab('rf', this)">Random Forest</button>
+                <button class="modal-tab" onclick="switchTab('lr', this)">Linear Regression</button>
+            </div>
+
+            <!-- XGBoost -->
+            <div class="model-stats visible" id="stats-xgb">
+                <div class="stats-row">
+                    <div class="stat-card"><div class="stat-val">99.1%</div><div class="stat-lbl">R² Score</div></div>
+                    <div class="stat-card"><div class="stat-val">1.65</div><div class="stat-lbl">Mean Abs. Error</div></div>
+                    <div class="stat-card"><div class="stat-val">2.18</div><div class="stat-lbl">RMSE</div></div>
+                </div>
+                <span class="feat-label">Feature correlation with Performance Index</span>
+                <div class="feat-row"><span class="feat-name">Previous Scores</span><div class="feat-track"><div class="feat-fill" style="width:93%"></div></div><span class="feat-pct">93%</span></div>
+                <div class="feat-row"><span class="feat-name">Hours Studied</span><div class="feat-track"><div class="feat-fill" style="width:78%"></div></div><span class="feat-pct">78%</span></div>
+                <div class="feat-row"><span class="feat-name">Practice Papers</span><div class="feat-track"><div class="feat-fill" style="width:62%"></div></div><span class="feat-pct">62%</span></div>
+                <div class="feat-row"><span class="feat-name">Sleep Hours</span><div class="feat-track"><div class="feat-fill" style="width:46%"></div></div><span class="feat-pct">46%</span></div>
+                <div class="feat-row"><span class="feat-name">Extracurricular Activities</span><div class="feat-track"><div class="feat-fill" style="width:27%"></div></div><span class="feat-pct">27%</span></div>
+            </div>
+
+            <!-- Random Forest -->
+            <div class="model-stats" id="stats-rf">
+                <div class="stats-row">
+                    <div class="stat-card"><div class="stat-val">99.0%</div><div class="stat-lbl">R² Score</div></div>
+                    <div class="stat-card"><div class="stat-val">1.77</div><div class="stat-lbl">Mean Abs. Error</div></div>
+                    <div class="stat-card"><div class="stat-val">2.31</div><div class="stat-lbl">RMSE</div></div>
+                </div>
+                <span class="feat-label">Feature correlation with Performance Index</span>
+                <div class="feat-row"><span class="feat-name">Previous Scores</span><div class="feat-track"><div class="feat-fill" style="width:91%"></div></div><span class="feat-pct">91%</span></div>
+                <div class="feat-row"><span class="feat-name">Hours Studied</span><div class="feat-track"><div class="feat-fill" style="width:75%"></div></div><span class="feat-pct">75%</span></div>
+                <div class="feat-row"><span class="feat-name">Practice Papers</span><div class="feat-track"><div class="feat-fill" style="width:60%"></div></div><span class="feat-pct">60%</span></div>
+                <div class="feat-row"><span class="feat-name">Sleep Hours</span><div class="feat-track"><div class="feat-fill" style="width:44%"></div></div><span class="feat-pct">44%</span></div>
+                <div class="feat-row"><span class="feat-name">Extracurricular Activities</span><div class="feat-track"><div class="feat-fill" style="width:26%"></div></div><span class="feat-pct">26%</span></div>
+            </div>
+
+            <!-- Linear Regression -->
+            <div class="model-stats" id="stats-lr">
+                <div class="stats-row">
+                    <div class="stat-card"><div class="stat-val">98.9%</div><div class="stat-lbl">R² Score</div></div>
+                    <div class="stat-card"><div class="stat-val">1.98</div><div class="stat-lbl">Mean Abs. Error</div></div>
+                    <div class="stat-card"><div class="stat-val">2.51</div><div class="stat-lbl">RMSE</div></div>
+                </div>
+                <span class="feat-label">Feature correlation with Performance Index</span>
+                <div class="feat-row"><span class="feat-name">Previous Scores</span><div class="feat-track"><div class="feat-fill" style="width:92%"></div></div><span class="feat-pct">92%</span></div>
+                <div class="feat-row"><span class="feat-name">Hours Studied</span><div class="feat-track"><div class="feat-fill" style="width:76%"></div></div><span class="feat-pct">76%</span></div>
+                <div class="feat-row"><span class="feat-name">Practice Papers</span><div class="feat-track"><div class="feat-fill" style="width:61%"></div></div><span class="feat-pct">61%</span></div>
+                <div class="feat-row"><span class="feat-name">Sleep Hours</span><div class="feat-track"><div class="feat-fill" style="width:45%"></div></div><span class="feat-pct">45%</span></div>
+                <div class="feat-row"><span class="feat-name">Extracurricular Activities</span><div class="feat-track"><div class="feat-fill" style="width:28%"></div></div><span class="feat-pct">28%</span></div>
+            </div>
+
+            <div class="modal-note">
+                All models trained on 10,000 samples (80/20 split). Metrics are evaluated on the held-out test set. Feature correlation values are based on Pearson correlation with the target variable. XGBoost consistently achieves the lowest error on this dataset.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedModel = 'xgb';
+
+    function selectModel(key) {
+        selectedModel = key;
+        ['lr', 'rf', 'xgb'].forEach(k => {
+            document.getElementById('opt-' + k).classList.toggle('active', k === key);
+        });
+        const r = document.getElementById('result');
+        if (r.classList.contains('show') && !r.classList.contains('error')) {
+            r.classList.remove('show');
+        }
+    }
+
+    async function predict() {
+        const data = {
+            Hours_Studied: parseFloat(document.getElementById('hs').value),
+            Previous_Scores: parseFloat(document.getElementById('ps').value),
+            Extracurricular_Activities: parseInt(document.getElementById('ea').value),
+            Sleep_Hours: parseFloat(document.getElementById('sh').value),
+            Sample_Question_Papers_Practiced: parseFloat(document.getElementById('sp').value),
+            model: selectedModel
+        };
+
+        const resultDiv   = document.getElementById('result');
+        const scoreVal    = document.getElementById('score-val');
+        const scoreLbl    = document.getElementById('score-lbl');
+        const scoreModel  = document.getElementById('score-model');
+
+        try {
+            const res  = await fetch('http://127.0.0.1:8000/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            scoreVal.textContent   = json['Predicted Performance Index'];
+            scoreLbl.textContent   = 'Predicted Performance Index';
+            scoreModel.textContent = 'via ' + json['model_used'];
+            resultDiv.classList.remove('error');
+            resultDiv.classList.add('show');
+        } catch (err) {
+            scoreVal.textContent   = 'Error';
+            scoreLbl.textContent   = err.message || 'Could not reach server';
+            scoreModel.textContent = '';
+            resultDiv.classList.add('error', 'show');
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('hs').value = 7;
+        document.getElementById('ps').value = 85;
+        document.getElementById('ea').value = 1;
+        document.getElementById('sh').value = 8;
+        document.getElementById('sp').value = 5;
+        document.getElementById('result').classList.remove('show', 'error');
+    }
+
+    function openStats()  { document.getElementById('statsModal').classList.add('open'); }
+    function closeStats() { document.getElementById('statsModal').classList.remove('open'); }
+    function closeOnOverlay(e) { if (e.target === document.getElementById('statsModal')) closeStats(); }
+
+    function switchTab(key, btn) {
+        document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.model-stats').forEach(s => s.classList.remove('visible'));
+        btn.classList.add('active');
+        document.getElementById('stats-' + key).classList.add('visible');
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeStats();
+        if (e.key === 'Enter')  predict();
+    });
+</script>
+</body>
+</html>
